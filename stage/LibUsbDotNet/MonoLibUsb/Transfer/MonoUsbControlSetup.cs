@@ -122,6 +122,10 @@ namespace MonoLibUsb.Transfer
         /// <param name="length">Number of to copy.</param>
         public void SetData(object data, int offset, int length)
         {
+            if (length == 0)
+            {
+                return;
+            }
             PinnedHandle p = new PinnedHandle(data);
             Byte[] temp = new byte[length];
             Marshal.Copy(p.Handle, temp, offset, length);
