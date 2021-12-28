@@ -155,6 +155,7 @@ namespace MonoLibUsb
 #if !NETSTANDARD1_5 && !NETSTANDARD1_6
                 mUsbEventThread.Priority = mPriority;
 #endif
+                mUsbEventThread.IsBackground = true;
                 mUsbEventThread.Start(mSessionHandle);
 
             }

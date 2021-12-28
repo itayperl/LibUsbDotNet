@@ -243,6 +243,7 @@ namespace LibUsbDotNet
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER || NETCOREAPP2_0_OR_GREATER
             mReadThread.Priority = ReadThreadPriority;
 #endif
+            mReadThread.IsBackground = true;
             mReadThread.Start(TransferContext);
             Thread.Sleep(1);
 #if !NETSTANDARD && !NETCOREAPP
