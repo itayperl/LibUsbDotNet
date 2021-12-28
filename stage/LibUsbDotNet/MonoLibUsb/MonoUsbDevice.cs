@@ -403,6 +403,38 @@ namespace LibUsbDotNet.LudnMonoLibUsb
         }
 
         /// <summary>
+        /// Detach the specified interface of the device from any active kernel driver.
+        /// </summary>
+        /// <param name="interfaceID">The interface to detach.</param>
+        /// <returns>True on success.</returns>
+        public bool DetachKernelDriver(int interfaceID)
+        {
+            int ret = MonoUsbApi.DetachKernelDriver((MonoUsbDeviceHandle)mUsbHandle, interfaceID);
+            if (ret != 0 && ret != (int)MonoUsbError.ErrorNotFound)
+            {
+                UsbError.Error(ErrorCode.MonoApiError, ret, "DetachKernelDriver Failed", this);
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Reattach the specified interface to the kernel driver previously detached via DetachKernelDriver
+        /// </summary>
+        /// <param name="interfaceID">The interface to attach.</param>
+        /// <returns>True on success.</returns>
+        public bool AttachKernelDriver(int interfaceID)
+        {
+            int ret = MonoUsbApi.AttachKernelDriver((MonoUsbDeviceHandle)mUsbHandle, interfaceID);
+            if (ret != 0 && ret != (int)MonoUsbError.ErrorNotFound)
+            {
+                UsbError.Error(ErrorCode.MonoApiError, ret, "AttachKernelDriver Failed", this);
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Claims the specified interface of the device.
         /// </summary>
         /// <param name="interfaceID">The interface to claim.</param>
