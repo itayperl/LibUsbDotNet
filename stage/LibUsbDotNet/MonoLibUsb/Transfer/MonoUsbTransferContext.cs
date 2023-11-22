@@ -20,6 +20,7 @@
 // 
 // 
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using LibUsbDotNet.Main;
@@ -39,6 +40,7 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
         public MonoUsbTransferContext(UsbEndpointBase endpointBase)
             : base(endpointBase)
         {
+            _objId = Interlocked.Increment(ref _objIdCtr);
         }
 
 
@@ -60,7 +62,7 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
             if (!mbDisposed2)
             {
                 mbDisposed2 = true;
-                freeTransfer();
+                freeTransfer(true);
                 if (disposing)
                 {
                     // Dispose managed resources.
@@ -94,7 +96,7 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
             }
             ///////////////////////////////////////////////////////////////
             
-            freeTransfer();
+            freeTransfer(false);
             mTransfer = MonoUsbTransfer.Alloc(numIsoPackets);
             mOwnsTransfer = ownsTransfer;
             mTransfer.Type = endpointType;
@@ -111,17 +113,31 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
 
 
         }
-        private void freeTransfer()
+
+        private static int _objIdCtr = 0;
+        private readonly long _objId;
+        private void freeTransfer(bool disposing)
         {
-            if (mTransfer.IsInvalid || mOwnsTransfer == false) return;
-            mTransferCancelEvent.Set();
-            mTransferCompleteEvent.WaitOne(200);
-            mTransfer.Free();
+            var nothingToFree = mTransfer.IsInvalid || mOwnsTransfer == false;
+            var time = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
+            Console.Error.WriteLine($"MonoUsbTransferContext.freeTransfer: id={_objId} time={time:F6} ntf={nothingToFree} tid={Environment.CurrentManagedThreadId} disposing={disposing}");
+            if (nothingToFree) return;
+            try
+            {
+                mTransferCancelEvent.Set();
+                mTransferCompleteEvent.WaitOne(200);
+                mTransfer.Free();
 
-            if (mCompleteEventHandle.IsAllocated)
-                mCompleteEventHandle.Free();
-
-           
+                if (mCompleteEventHandle.IsAllocated)
+                    mCompleteEventHandle.Free();
+            }
+            catch (ObjectDisposedException ex)
+            {
+                Console.Error.WriteLine($"MonoUsbTransferContext.freeTransfer exception ignored {ex}");
+                Console.Error.WriteLine($"\t isClosed = {mTransferCancelEvent.SafeWaitHandle.IsClosed}");
+                Console.Error.WriteLine($"\t isInvalid = {mTransferCancelEvent.SafeWaitHandle.IsInvalid}");
+                Console.Error.WriteLine($"\t isAllocated = {mCompleteEventHandle.IsAllocated}");
+            }
         }
 
         /// <summary>
