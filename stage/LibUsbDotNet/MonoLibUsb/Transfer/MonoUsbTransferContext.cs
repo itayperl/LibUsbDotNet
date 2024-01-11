@@ -120,7 +120,6 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
         {
             var nothingToFree = mTransfer.IsInvalid || mOwnsTransfer == false;
             var time = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
-            Console.Error.WriteLine($"MonoUsbTransferContext.freeTransfer: id={_objId} time={time:F6} ntf={nothingToFree} tid={Environment.CurrentManagedThreadId} disposing={disposing}");
             if (nothingToFree) return;
             try
             {
