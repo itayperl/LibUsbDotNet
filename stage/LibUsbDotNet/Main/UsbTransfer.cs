@@ -300,17 +300,26 @@ namespace LibUsbDotNet.Main
                 ErrorCode ec;
                 transferContext.Fill(buffer, offset, length, timeout, isoPacketSize);
 
+                int retries = 5;
+
                 while (true)
                 {
                     ec = transferContext.Submit();
                     if (ec != ErrorCode.Success) return ec;
 
                     ec = transferContext.Wait(out transferred);
-                    if (ec != ErrorCode.Success) return ec;
+                    if (ec == ErrorCode.PipeError)
+                    {
+                        if (retries-- > 0) continue;
+                    }
+                    if (ec != ErrorCode.Success)
+                    {
+                        return ec;
+                    }
 
                     transferLength += transferred;
 
-                    if ((ec != ErrorCode.None || transferred != UsbEndpointBase.MaxReadWrite) ||
+                    if (transferred != UsbEndpointBase.MaxReadWrite ||
                         !transferContext.IncrementTransfer(transferred))
                         break;
                 }
